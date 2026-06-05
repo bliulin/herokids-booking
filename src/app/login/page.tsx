@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function LoginPage() {
   const [password, setPassword] = useState("");
@@ -33,9 +34,17 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-50 to-blue-100">
       <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="text-4xl mb-2">🎠</div>
-          <h1 className="text-2xl font-bold text-gray-800">HeroKids</h1>
-          <p className="text-gray-500 text-sm mt-1">Staff Booking System</p>
+          <div className="flex justify-center mb-4">
+            <Image
+              src="https://herokids.ro/wp-content/uploads/2026/03/logo-wide-220.webp"
+              alt="HeroKids"
+              width={160}
+              height={58}
+              style={{ height: 58, width: "auto" }}
+              priority
+            />
+          </div>
+          <p className="text-gray-500 text-sm">Staff Booking System</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
