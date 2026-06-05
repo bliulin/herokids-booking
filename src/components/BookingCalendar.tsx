@@ -1,14 +1,20 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useCallback, useState } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import type { EventClickArg, DateSelectArg, EventContentArg } from "@fullcalendar/core";
+import type {
+  EventClickArg,
+  DateSelectArg,
+  EventContentArg,
+  EventDropArg,
+} from "@fullcalendar/core";
 import type { Booking } from "@/db/schema";
 import { bookingTypeColors } from "@/types/booking";
-import { format } from "date-fns";
+import { useUpdateBooking } from "@/hooks/useBookings";
+import { X } from "lucide-react";
 
 interface BookingCalendarProps {
   bookings: Booking[];
@@ -30,6 +36,8 @@ function toCalendarEvent(booking: Booking) {
     borderColor: "transparent",
     textColor: "#fff",
     classNames: isCancelled ? ["cancelled-event"] : [],
+    // Cancelled bookings can't be moved
+    editable: !isCancelled,
     extendedProps: { booking },
   };
 }
@@ -37,8 +45,8 @@ function toCalendarEvent(booking: Booking) {
 function EventContent({ info }: { info: EventContentArg }) {
   const booking: Booking | undefined = info.event.extendedProps.booking;
 
-  // FullCalendar renders internal events (selectMirror, popover, etc.) that
-  // don't carry our extendedProps — fall back to the default title rendering.
+  // FullCalendar renders internal events (selectMirror, drag ghost, etc.)
+  // that don't carry our extendedProps — fall back to the default title.
   if (!booking) {
     return <div className="px-1 truncate text-xs">{info.event.title}</div>;
   }
@@ -71,6 +79,9 @@ export function BookingCalendar({
   onRangeChange,
 }: BookingCalendarProps) {
   const calRef = useRef<FullCalendar>(null);
+  const update = useUpdateBooking();
+  const [dropError, setDropError] = useState<string>("");
+
   const events = bookings.map(toCalendarEvent);
 
   const handleEventClick = useCallback(
@@ -89,8 +100,45 @@ export function BookingCalendar({
     [onDateSelect]
   );
 
+  const handleEventDrop = useCallback(
+    async (info: EventDropArg) => {
+      const booking: Booking | undefined = info.event.extendedProps.booking;
+      const newStart = info.event.start;
+      const newEnd = info.event.end;
+
+      if (!booking || !newStart || !newEnd) {
+        info.revert();
+        return;
+      }
+
+      setDropError("");
+      try {
+        await update.mutateAsync({
+          id: booking.id,
+          input: {
+            startTime: newStart.toISOString(),
+            endTime: newEnd.toISOString(),
+          },
+        });
+      } catch (err: any) {
+        info.revert();
+        setDropError(err.message ?? "Could not move booking.");
+      }
+    },
+    [update]
+  );
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+      {dropError && (
+        <div className="flex items-center justify-between mb-3 bg-red-50 border border-red-200 rounded-lg px-4 py-2 text-sm text-red-700">
+          <span>{dropError}</span>
+          <button onClick={() => setDropError("")} className="ml-3 text-red-400 hover:text-red-600">
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       <FullCalendar
         ref={calRef}
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -101,6 +149,9 @@ export function BookingCalendar({
           right: "dayGridMonth,timeGridWeek,timeGridDay",
         }}
         events={events}
+        // Enable dragging; duration resizing is off — use the edit modal for that
+        editable
+        eventDurationEditable={false}
         selectable
         selectMirror
         dayMaxEvents={3}
@@ -111,6 +162,7 @@ export function BookingCalendar({
         slotDuration="00:30:00"
         nowIndicator
         eventClick={handleEventClick}
+        eventDrop={handleEventDrop}
         select={handleDateSelect}
         datesSet={(info) => onRangeChange(info.startStr, info.endStr)}
         eventContent={(info) => <EventContent info={info} />}
