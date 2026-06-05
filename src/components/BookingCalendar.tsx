@@ -35,7 +35,14 @@ function toCalendarEvent(booking: Booking) {
 }
 
 function EventContent({ info }: { info: EventContentArg }) {
-  const booking: Booking = info.event.extendedProps.booking;
+  const booking: Booking | undefined = info.event.extendedProps.booking;
+
+  // FullCalendar renders internal events (selectMirror, popover, etc.) that
+  // don't carry our extendedProps — fall back to the default title rendering.
+  if (!booking) {
+    return <div className="px-1 truncate text-xs">{info.event.title}</div>;
+  }
+
   const isTimeGrid = info.view.type.startsWith("timeGrid");
 
   if (isTimeGrid) {
@@ -68,8 +75,8 @@ export function BookingCalendar({
 
   const handleEventClick = useCallback(
     (info: EventClickArg) => {
-      const booking: Booking = info.event.extendedProps.booking;
-      onEventClick(booking);
+      const booking: Booking | undefined = info.event.extendedProps.booking;
+      if (booking) onEventClick(booking);
     },
     [onEventClick]
   );
