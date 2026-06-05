@@ -27,7 +27,7 @@ The minimum required values to run locally (without Google Calendar):
 
 ```
 DATABASE_URL=./herokids.db
-ACCESS_PASSWORD=herokids2024
+ACCESS_PASSWORD=herokids2026
 ```
 
 Change `ACCESS_PASSWORD` to something your team will use to log in.

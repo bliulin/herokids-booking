@@ -1,4 +1,4 @@
-  Login at http://localhost:3000 with password herokids2024 (set in .env.local).
+  Login at http://localhost:3000 with password herokids2026 (set in .env.local).
 
   ---
   What works right now
