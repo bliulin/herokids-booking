@@ -5,6 +5,9 @@ node_modules/
 .next/
 out/
 
+# TypeScript incremental build cache
+*.tsbuildinfo
+
 # Database (SQLite — back up separately, never commit)
 *.db
 *.db-shm
