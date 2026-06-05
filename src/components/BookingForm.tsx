@@ -42,6 +42,9 @@ export function BookingForm({
       bookingType: "play_session",
       numberOfChildren: 1,
       ...defaultValues,
+      // datetime-local inputs require "yyyy-MM-dd'T'HH:mm" — convert from ISO if present
+      startTime: toDateTimeLocal(defaultValues?.startTime) || defaultValues?.startTime || "",
+      endTime: toDateTimeLocal(defaultValues?.endTime) || defaultValues?.endTime || "",
     },
   });
 
@@ -88,7 +91,6 @@ export function BookingForm({
             {...register("startTime")}
             type="datetime-local"
             className={input(errors.startTime)}
-            defaultValue={toDateTimeLocal(defaultValues?.startTime)}
           />
         </Field>
         <Field label="End Time *" error={errors.endTime?.message}>
@@ -96,7 +98,6 @@ export function BookingForm({
             {...register("endTime")}
             type="datetime-local"
             className={input(errors.endTime)}
-            defaultValue={toDateTimeLocal(defaultValues?.endTime)}
           />
         </Field>
       </div>
