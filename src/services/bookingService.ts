@@ -1,13 +1,13 @@
-import { eq, gte, lte, and, desc } from "drizzle-orm";
-import { db, sqlite } from "@/db";
-import { bookings, type Booking, type NewBooking } from "@/db/schema";
-import { checkCapacity } from "./capacityService";
+import { eq, gte, lte, and, ne, desc, sql } from "drizzle-orm";
+import { db } from "@/db";
+import { bookings, type Booking } from "@/db/schema";
+import { config } from "@/lib/config";
 import {
   createCalendarEvent,
   updateCalendarEvent,
   cancelCalendarEvent,
 } from "./googleCalendarService";
-import type { CreateBookingInput, UpdateBookingInput } from "@/types/booking";
+import type { CreateBookingInput } from "@/types/booking";
 
 export class BookingError extends Error {
   constructor(
@@ -25,12 +25,7 @@ export async function getBookings(from?: string, to?: string): Promise<Booking[]
     return db
       .select()
       .from(bookings)
-      .where(
-        and(
-          gte(bookings.startTime, from),
-          lte(bookings.startTime, to)
-        )
-      )
+      .where(and(gte(bookings.startTime, from), lte(bookings.startTime, to)))
       .orderBy(bookings.startTime);
   }
   return db.select().from(bookings).orderBy(desc(bookings.startTime));
@@ -38,9 +33,7 @@ export async function getBookings(from?: string, to?: string): Promise<Booking[]
 
 export async function getBookingById(id: number): Promise<Booking> {
   const [booking] = await db.select().from(bookings).where(eq(bookings.id, id));
-  if (!booking) {
-    throw new BookingError(`Booking ${id} not found`, "not_found");
-  }
+  if (!booking) throw new BookingError(`Booking ${id} not found`, "not_found");
   return booking;
 }
 
@@ -49,71 +42,55 @@ export async function createBooking(input: CreateBookingInput): Promise<Booking>
     throw new BookingError("End time must be after start time", "validation_error");
   }
 
-  // Server-side capacity check inside an exclusive transaction to prevent race conditions.
-  // SQLite serializes writes, so wrapping in a transaction guarantees the check and insert are atomic.
-  const insert = sqlite.transaction(() => {
-    // Re-run capacity check inside the transaction
-    const capacity = checkCapacitySync(input.startTime, input.endTime, input.numberOfChildren);
-    if (!capacity.allowed) {
+  // SERIALIZABLE transaction: PostgreSQL will abort one of two concurrent transactions
+  // that would both pass the capacity check, preventing phantom-read race conditions.
+  let created: Booking;
+  try {
+    created = await db.transaction(
+      async (tx) => {
+        const capacity = await checkCapacityInTx(
+          tx, input.startTime, input.endTime, input.numberOfChildren
+        );
+        if (!capacity.allowed) {
+          throw new BookingError(capacity.message!, "capacity_exceeded", {
+            currentOccupancy: capacity.currentOccupancy,
+            max: capacity.max,
+          });
+        }
+
+        const [row] = await tx
+          .insert(bookings)
+          .values({
+            customerName: input.customerName,
+            phone: input.phone,
+            email: input.email || null,
+            numberOfChildren: input.numberOfChildren,
+            bookingType: input.bookingType,
+            startTime: input.startTime,
+            endTime: input.endTime,
+            status: input.status,
+            paymentStatus: input.paymentStatus,
+            notes: input.notes || null,
+            calendarSyncStatus: "not_synced",
+          })
+          .returning();
+        return row;
+      },
+      { isolationLevel: "serializable" }
+    );
+  } catch (err) {
+    if (err instanceof BookingError) throw err;
+    // PostgreSQL serialization failure (code 40001) — treat as capacity error
+    if ((err as any)?.code === "40001") {
       throw new BookingError(
-        capacity.message ?? "Capacity exceeded",
-        "capacity_exceeded",
-        { currentOccupancy: capacity.currentOccupancy, max: capacity.max }
+        "Booking could not be saved due to a concurrent update. Please try again.",
+        "capacity_exceeded"
       );
     }
-
-    const now = new Date().toISOString();
-    const [created] = db
-      .insert(bookings)
-      .values({
-        customerName: input.customerName,
-        phone: input.phone,
-        email: input.email || null,
-        numberOfChildren: input.numberOfChildren,
-        bookingType: input.bookingType,
-        startTime: input.startTime,
-        endTime: input.endTime,
-        status: input.status,
-        paymentStatus: input.paymentStatus,
-        notes: input.notes || null,
-        calendarSyncStatus: "not_synced",
-        createdAt: now,
-        updatedAt: now,
-      })
-      .returning()
-      .all();
-
-    return created;
-  });
-
-  const created = insert();
-
-  // Sync to Google Calendar after the transaction commits (non-blocking on failure)
-  const syncResult = await createCalendarEvent(created);
-  if (syncResult.success && syncResult.eventId) {
-    await db
-      .update(bookings)
-      .set({
-        googleCalendarEventId: syncResult.eventId,
-        calendarSyncStatus: "synced",
-        calendarSyncError: null,
-        updatedAt: new Date().toISOString(),
-      })
-      .where(eq(bookings.id, created.id));
-    return { ...created, googleCalendarEventId: syncResult.eventId, calendarSyncStatus: "synced" };
-  } else if (!syncResult.success) {
-    await db
-      .update(bookings)
-      .set({
-        calendarSyncStatus: "sync_failed",
-        calendarSyncError: syncResult.error ?? null,
-        updatedAt: new Date().toISOString(),
-      })
-      .where(eq(bookings.id, created.id));
-    return { ...created, calendarSyncStatus: "sync_failed", calendarSyncError: syncResult.error ?? null };
+    throw err;
   }
 
-  return created;
+  return applyCalendarSync(created, () => createCalendarEvent(created));
 }
 
 export async function updateBooking(id: number, input: Partial<CreateBookingInput>): Promise<Booking> {
@@ -122,59 +99,117 @@ export async function updateBooking(id: number, input: Partial<CreateBookingInpu
   const startTime = input.startTime ?? existing.startTime;
   const endTime = input.endTime ?? existing.endTime;
   const numberOfChildren = input.numberOfChildren ?? existing.numberOfChildren;
+  const newStatus = input.status ?? existing.status;
 
   if (new Date(endTime) <= new Date(startTime)) {
     throw new BookingError("End time must be after start time", "validation_error");
   }
 
-  // Only capacity-check if the booking is not being cancelled
-  const newStatus = input.status ?? existing.status;
-  if (newStatus !== "cancelled") {
-    const capacity = await checkCapacity(startTime, endTime, numberOfChildren, id);
-    if (!capacity.allowed) {
+  let updated: Booking;
+  try {
+    updated = await db.transaction(
+      async (tx) => {
+        if (newStatus !== "cancelled") {
+          const capacity = await checkCapacityInTx(
+            tx, startTime, endTime, numberOfChildren, id
+          );
+          if (!capacity.allowed) {
+            throw new BookingError(capacity.message!, "capacity_exceeded", {
+              currentOccupancy: capacity.currentOccupancy,
+              max: capacity.max,
+            });
+          }
+        }
+
+        const [row] = await tx
+          .update(bookings)
+          .set({
+            ...(input.customerName !== undefined && { customerName: input.customerName }),
+            ...(input.phone !== undefined && { phone: input.phone }),
+            ...(input.email !== undefined && { email: input.email || null }),
+            ...(input.numberOfChildren !== undefined && { numberOfChildren: input.numberOfChildren }),
+            ...(input.bookingType !== undefined && { bookingType: input.bookingType }),
+            ...(input.startTime !== undefined && { startTime: input.startTime }),
+            ...(input.endTime !== undefined && { endTime: input.endTime }),
+            ...(input.status !== undefined && { status: input.status }),
+            ...(input.paymentStatus !== undefined && { paymentStatus: input.paymentStatus }),
+            ...(input.notes !== undefined && { notes: input.notes || null }),
+            updatedAt: new Date(),
+          })
+          .where(eq(bookings.id, id))
+          .returning();
+        return row;
+      },
+      { isolationLevel: "serializable" }
+    );
+  } catch (err) {
+    if (err instanceof BookingError) throw err;
+    if ((err as any)?.code === "40001") {
       throw new BookingError(
-        capacity.message ?? "Capacity exceeded",
-        "capacity_exceeded",
-        { currentOccupancy: capacity.currentOccupancy, max: capacity.max }
+        "Booking could not be saved due to a concurrent update. Please try again.",
+        "capacity_exceeded"
       );
     }
+    throw err;
   }
 
-  const update = sqlite.transaction(() => {
-    const [updated] = db
-      .update(bookings)
-      .set({
-        ...(input.customerName !== undefined && { customerName: input.customerName }),
-        ...(input.phone !== undefined && { phone: input.phone }),
-        ...(input.email !== undefined && { email: input.email || null }),
-        ...(input.numberOfChildren !== undefined && { numberOfChildren: input.numberOfChildren }),
-        ...(input.bookingType !== undefined && { bookingType: input.bookingType }),
-        ...(input.startTime !== undefined && { startTime: input.startTime }),
-        ...(input.endTime !== undefined && { endTime: input.endTime }),
-        ...(input.status !== undefined && { status: input.status }),
-        ...(input.paymentStatus !== undefined && { paymentStatus: input.paymentStatus }),
-        ...(input.notes !== undefined && { notes: input.notes || null }),
-        updatedAt: new Date().toISOString(),
-      })
-      .where(eq(bookings.id, id))
-      .returning()
-      .all();
-    return updated;
-  });
+  const calendarOp =
+    updated.status === "cancelled" && updated.googleCalendarEventId
+      ? () => cancelCalendarEvent(updated.googleCalendarEventId!)
+      : () => updateCalendarEvent(updated);
 
-  const updated = update();
+  return applyCalendarSync(updated, calendarOp);
+}
 
-  // Sync calendar
-  let syncResult;
-  if (updated.status === "cancelled" && updated.googleCalendarEventId) {
-    syncResult = await cancelCalendarEvent(updated.googleCalendarEventId);
-  } else {
-    syncResult = await updateCalendarEvent(updated);
-  }
+export async function cancelBooking(id: number): Promise<Booking> {
+  return updateBooking(id, { status: "cancelled" });
+}
+
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+async function checkCapacityInTx(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  startTime: string,
+  endTime: string,
+  numberOfChildren: number,
+  excludeId?: number
+) {
+  const max = config.venue.maxChildren;
+  const conditions = [
+    ne(bookings.status, "cancelled"),
+    sql`${bookings.startTime} < ${endTime}`,
+    sql`${bookings.endTime} > ${startTime}`,
+  ];
+  if (excludeId !== undefined) conditions.push(ne(bookings.id, excludeId));
+
+  const rows = await tx
+    .select({ n: bookings.numberOfChildren })
+    .from(bookings)
+    .where(and(...conditions));
+
+  const currentOccupancy = rows.reduce((s, r) => s + r.n, 0);
+  const total = currentOccupancy + numberOfChildren;
+
+  return {
+    allowed: total <= max,
+    currentOccupancy,
+    max,
+    message:
+      total > max
+        ? `Capacity exceeded. ${currentOccupancy} children already booked in this time slot. Adding ${numberOfChildren} more would reach ${total}/${max}.`
+        : undefined,
+  };
+}
+
+async function applyCalendarSync(
+  booking: Booking,
+  calendarOp: () => Promise<{ success: boolean; eventId?: string; error?: string }>
+): Promise<Booking> {
+  const syncResult = await calendarOp();
 
   const calendarUpdates = syncResult.success
     ? {
-        googleCalendarEventId: syncResult.eventId ?? updated.googleCalendarEventId,
+        googleCalendarEventId: syncResult.eventId ?? booking.googleCalendarEventId,
         calendarSyncStatus: "synced" as const,
         calendarSyncError: null,
       }
@@ -185,52 +220,8 @@ export async function updateBooking(id: number, input: Partial<CreateBookingInpu
 
   await db
     .update(bookings)
-    .set({ ...calendarUpdates, updatedAt: new Date().toISOString() })
-    .where(eq(bookings.id, id));
+    .set({ ...calendarUpdates, updatedAt: new Date() })
+    .where(eq(bookings.id, booking.id));
 
-  return { ...updated, ...calendarUpdates };
-}
-
-export async function cancelBooking(id: number): Promise<Booking> {
-  return updateBooking(id, { status: "cancelled" });
-}
-
-// Synchronous version for use inside SQLite transactions
-function checkCapacitySync(
-  startTime: string,
-  endTime: string,
-  numberOfChildren: number,
-  excludeId?: number
-): { allowed: boolean; currentOccupancy: number; max: number; message?: string } {
-  const max = 30;
-
-  // Use raw sqlite for synchronous execution inside a transaction
-  let query = `
-    SELECT COALESCE(SUM(number_of_children), 0) as total
-    FROM bookings
-    WHERE status != 'cancelled'
-      AND start_time < ?
-      AND end_time > ?
-  `;
-  const params: (string | number)[] = [endTime, startTime];
-
-  if (excludeId !== undefined) {
-    query += " AND id != ?";
-    params.push(excludeId);
-  }
-
-  const row = sqlite.prepare(query).get(...params) as { total: number };
-  const currentOccupancy = row?.total ?? 0;
-  const total = currentOccupancy + numberOfChildren;
-
-  if (total > max) {
-    return {
-      allowed: false,
-      currentOccupancy,
-      max,
-      message: `Capacity exceeded. ${currentOccupancy} children already booked in this time slot. Adding ${numberOfChildren} more would reach ${total}/${max}.`,
-    };
-  }
-
-  return { allowed: true, currentOccupancy, max };
+  return { ...booking, ...calendarUpdates };
 }

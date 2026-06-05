@@ -1,4 +1,4 @@
-import { and, ne, not, eq, or, lte, gte, sql } from "drizzle-orm";
+import { and, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { bookings } from "@/db/schema";
 import { config } from "@/lib/config";
@@ -14,9 +14,7 @@ export interface CapacityCheckResult {
 /**
  * Checks whether adding `numberOfChildren` children during [startTime, endTime]
  * would exceed venue capacity. Excludes the booking with `excludeId` (used during edits).
- *
- * Uses a database-level SELECT with a FOR UPDATE equivalent (SQLite serialized writes
- * via WAL + exclusive transaction) to prevent race conditions.
+ * Call this inside a SERIALIZABLE transaction to prevent phantom-read race conditions.
  */
 export async function checkCapacity(
   startTime: string,

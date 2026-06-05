@@ -1,11 +1,11 @@
-import { db } from "./index";
+import { db, pgClient } from "./index";
 import { bookings } from "./schema";
-import { addDays, setHours, setMinutes, format } from "date-fns";
+import { addDays } from "date-fns";
 
 const today = new Date();
 today.setHours(0, 0, 0, 0);
 
-function dt(daysOffset: number, hour: number, minute = 0) {
+function dt(daysOffset: number, hour: number, minute = 0): string {
   const d = addDays(today, daysOffset);
   d.setHours(hour, minute, 0, 0);
   return d.toISOString();
@@ -14,7 +14,7 @@ function dt(daysOffset: number, hour: number, minute = 0) {
 const seedData = [
   {
     customerName: "Emma Thompson",
-    phone: "+44 7911 123456",
+    phone: "+40 721 123 456",
     email: "emma.thompson@email.com",
     numberOfChildren: 8,
     bookingType: "standard" as const,
@@ -27,7 +27,7 @@ const seedData = [
   },
   {
     customerName: "James Wilson",
-    phone: "+44 7922 234567",
+    phone: "+40 722 234 567",
     email: "jwilson@gmail.com",
     numberOfChildren: 15,
     bookingType: "hero" as const,
@@ -40,7 +40,7 @@ const seedData = [
   },
   {
     customerName: "Sarah Chen",
-    phone: "+44 7933 345678",
+    phone: "+40 733 345 678",
     email: null,
     numberOfChildren: 5,
     bookingType: "standard" as const,
@@ -53,7 +53,7 @@ const seedData = [
   },
   {
     customerName: "Michael Brown",
-    phone: "+44 7944 456789",
+    phone: "+40 744 456 789",
     email: "mbrown@outlook.com",
     numberOfChildren: 25,
     bookingType: "vip" as const,
@@ -66,7 +66,7 @@ const seedData = [
   },
   {
     customerName: "Olivia Martinez",
-    phone: "+44 7955 567890",
+    phone: "+40 755 567 890",
     email: "olivia.m@email.com",
     numberOfChildren: 12,
     bookingType: "hero" as const,
@@ -79,7 +79,7 @@ const seedData = [
   },
   {
     customerName: "David Harris",
-    phone: "+44 7966 678901",
+    phone: "+40 766 678 901",
     email: null,
     numberOfChildren: 6,
     bookingType: "standard" as const,
@@ -92,7 +92,7 @@ const seedData = [
   },
   {
     customerName: "Lisa Taylor",
-    phone: "+44 7977 789012",
+    phone: "+40 777 789 012",
     email: "lisa.taylor@gmail.com",
     numberOfChildren: 10,
     bookingType: "walk_in" as const,
@@ -105,8 +105,8 @@ const seedData = [
   },
   {
     customerName: "Tom Anderson",
-    phone: "+44 7988 890123",
-    email: "tanderson@company.co.uk",
+    phone: "+40 788 890 123",
+    email: "tanderson@company.ro",
     numberOfChildren: 20,
     bookingType: "atelier" as const,
     startTime: dt(10, 9),
@@ -123,6 +123,7 @@ async function seed() {
   await db.delete(bookings);
   await db.insert(bookings).values(seedData);
   console.log(`Inserted ${seedData.length} bookings.`);
+  await pgClient.end();
   process.exit(0);
 }
 
