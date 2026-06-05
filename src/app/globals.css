@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --fc-border-color: #e5e7eb;
+  --fc-today-bg-color: #eff6ff;
+  --fc-event-bg-color: #3b82f6;
+  --fc-event-border-color: transparent;
+  --fc-event-text-color: #fff;
+}
+
+.fc-event {
+  cursor: pointer;
+  border-radius: 4px !important;
+  font-size: 0.75rem !important;
+  padding: 1px 4px !important;
+}
+
+.fc-event-title {
+  font-weight: 500;
+}
+
+.fc-toolbar-title {
+  font-size: 1.1rem !important;
+  font-weight: 600;
+}
+
+.fc-button-primary {
+  background-color: #0284c7 !important;
+  border-color: #0284c7 !important;
+}
+
+.fc-button-primary:hover {
+  background-color: #0369a1 !important;
+  border-color: #0369a1 !important;
+}
+
+.fc-button-active {
+  background-color: #0369a1 !important;
+}
+
+.fc-daygrid-day-number,
+.fc-col-header-cell-cushion {
+  color: #374151;
+  text-decoration: none !important;
+}
+
+.cancelled-event {
+  opacity: 0.5;
+  text-decoration: line-through;
+}

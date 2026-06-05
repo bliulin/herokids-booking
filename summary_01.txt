@@ -1,0 +1,50 @@
+  Login at http://localhost:3000 with password herokids2024 (set in .env.local).
+
+  ---
+  What works right now
+
+  ┌────────────────────────────────────────────────────────────────────┬──────────────────────────────────────────────────────┐
+  │                              Feature                               │                        Status                        │
+  ├────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────┤
+  │ Password-protected login                                           │ Working                                              │
+  ├────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────┤
+  │ Full calendar view (day / week / month)                            │ Working                                              │
+  ├────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────┤
+  │ Click a slot → create booking modal                                │ Working                                              │
+  ├────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────┤
+  │ Click an event → view / edit / cancel modal                        │ Working                                              │
+  ├────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────┤
+  │ Capacity check (max 30 children, server-side, race-condition-safe) │ Working — tested: returns 409 capacity_exceeded      │
+  ├────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────┤
+  │ Google Calendar sync (create/update/cancel)                        │ Working — shows clear error when credentials not set │
+  ├────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────┤
+  │ Booking stored even if calendar sync fails                         │ Working                                              │
+  ├────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────┤
+  │ 8 seed bookings for testing                                        │ Working                                              │
+  ├────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────┤
+  │ TypeScript strict mode — zero errors                               │ Passing                                              │
+  └────────────────────────────────────────────────────────────────────┴──────────────────────────────────────────────────────┘
+
+  ---
+  Google Calendar setup
+
+  │ TypeScript strict mode — zero errors                               │ Passing                                              │
+  └────────────────────────────────────────────────────────────────────┴──────────────────────────────────────────────────────┘
+
+  ---
+  Google Calendar setup
+
+  See SETUP.md for step-by-step instructions. The short version:
+
+  1. Create a Google Cloud project, enable Calendar API
+  2. Create OAuth 2.0 Web credentials, add http://localhost:3000/api/auth/google/callback as redirect URI
+  3. Use the OAuth Playground to get a refresh token
+  4. Fill GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN in .env.local
+
+  ---
+  First-version limitations (in SETUP.md)
+
+  - Simple shared-password auth — upgrade to NextAuth/Clerk before internet exposure
+  - Single room, hard-coded capacity of 30 (change maxChildren in src/lib/config.ts)
+  - No recurring bookings, no customer self-booking, no audit log
+  - SQLite is fine for single-server — migrate to PostgreSQL if you need multi-instance

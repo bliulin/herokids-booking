@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/login)",
+      "Bash(curl -s http://localhost:3000/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" -L http://localhost:3000/)",
+      "Bash(python3 -c \"import sys,json; d=json.loads\\(sys.stdin.read\\(\\).split\\('__NEXT_DATA__'\\)[1].split\\('</script>'\\)[0].strip\\(\\)[14:]\\); print\\(d.get\\('err',{}\\).get\\('message',''\\)[:500]\\)\")",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3001/)",
+      "Bash(curl -s -I http://localhost:3001/)",
+      "Bash(curl -s -c /tmp/cookies.txt -X POST http://localhost:3001/api/auth/login -H 'Content-Type: application/json' -d '{\"password\":\"herokids2024\"}')",
+      "Bash(curl -s -b /tmp/cookies.txt http://localhost:3001/api/bookings)",
+      "Bash(python3 -c ' *)",
+      "Bash(curl *)",
+      "Bash(netstat -ano)",
+      "PowerShell(Get-Process *)",
+      "PowerShell(Get-CimInstance *)",
+      "Read(//tmp/**)"
+    ]
+  }
+}
