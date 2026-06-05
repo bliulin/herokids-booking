@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import { integer, sqliteTable, text, real } from "drizzle-orm/sqlite-core";
 
-export type BookingType = "play_session" | "birthday_party" | "private_event" | "other";
+export type BookingType = "standard" | "hero" | "vip" | "walk_in" | "atelier";
 export type BookingStatus = "pending" | "confirmed" | "cancelled";
 export type PaymentStatus = "unpaid" | "deposit_paid" | "paid_in_full";
 export type CalendarSyncStatus = "not_synced" | "synced" | "sync_failed" | "pending_sync";
@@ -12,7 +12,7 @@ export const bookings = sqliteTable("bookings", {
   phone: text("phone").notNull(),
   email: text("email"),
   numberOfChildren: integer("number_of_children").notNull(),
-  bookingType: text("booking_type").$type<BookingType>().notNull().default("play_session"),
+  bookingType: text("booking_type").$type<BookingType>().notNull().default("standard"),
   startTime: text("start_time").notNull(), // ISO 8601 string
   endTime: text("end_time").notNull(),     // ISO 8601 string
   status: text("status").$type<BookingStatus>().notNull().default("pending"),

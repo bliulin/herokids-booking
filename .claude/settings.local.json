@@ -17,7 +17,8 @@
       "Bash(netstat -ano)",
       "PowerShell(Get-Process *)",
       "PowerShell(Get-CimInstance *)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(npx tsc *)"
     ]
   }
 }

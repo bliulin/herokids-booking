@@ -4,10 +4,11 @@ import type { Booking } from "@/db/schema";
 export type { Booking };
 
 export const bookingTypeLabels = {
-  play_session: "Play Session",
-  birthday_party: "Birthday Party",
-  private_event: "Private Event",
-  other: "Other",
+  standard: "Standard",
+  hero: "Hero",
+  vip: "VIP",
+  walk_in: "Walk-in",
+  atelier: "Atelier",
 } as const;
 
 export const bookingStatusLabels = {
@@ -29,10 +30,11 @@ export const bookingStatusColors = {
 } as const;
 
 export const bookingTypeColors = {
-  play_session: "#3b82f6",
-  birthday_party: "#ec4899",
-  private_event: "#8b5cf6",
-  other: "#f97316",
+  standard: "#3b82f6",
+  hero:     "#ec4899",
+  vip:      "#8b5cf6",
+  walk_in:  "#f97316",
+  atelier:  "#10b981",
 } as const;
 
 export const createBookingSchema = z.object({
@@ -44,7 +46,7 @@ export const createBookingSchema = z.object({
     .int("Must be a whole number")
     .min(1, "At least 1 child required")
     .max(30, "Cannot exceed venue maximum of 30"),
-  bookingType: z.enum(["play_session", "birthday_party", "private_event", "other"]),
+  bookingType: z.enum(["standard", "hero", "vip", "walk_in", "atelier"]),
   startTime: z.string().min(1, "Start time is required"),
   endTime: z.string().min(1, "End time is required"),
   status: z.enum(["pending", "confirmed", "cancelled"]),

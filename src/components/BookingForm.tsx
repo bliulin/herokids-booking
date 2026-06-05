@@ -39,7 +39,7 @@ export function BookingForm({
     defaultValues: {
       status: "pending",
       paymentStatus: "unpaid",
-      bookingType: "play_session",
+      bookingType: "standard",
       numberOfChildren: 1,
       ...defaultValues,
       // datetime-local inputs require "yyyy-MM-dd'T'HH:mm" — convert from ISO if present
@@ -68,10 +68,11 @@ export function BookingForm({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Booking Type *" error={errors.bookingType?.message}>
           <select {...register("bookingType")} className={input(errors.bookingType)}>
-            <option value="play_session">Play Session</option>
-            <option value="birthday_party">Birthday Party</option>
-            <option value="private_event">Private Event</option>
-            <option value="other">Other</option>
+            <option value="standard">Standard</option>
+            <option value="hero">Hero</option>
+            <option value="vip">VIP</option>
+            <option value="walk_in">Walk-in</option>
+            <option value="atelier">Atelier</option>
           </select>
         </Field>
         <Field label="Number of Children *" error={errors.numberOfChildren?.message}>
