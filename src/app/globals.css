@@ -8,7 +8,10 @@
   --fc-event-bg-color: #3b82f6;
   --fc-event-border-color: transparent;
   --fc-event-text-color: #fff;
+  --fc-list-event-hover-bg-color: #f0f9ff;
 }
+
+/* ── Grid events ─────────────────────────────── */
 
 .fc-event {
   cursor: pointer;
@@ -21,25 +24,6 @@
   font-weight: 500;
 }
 
-.fc-toolbar-title {
-  font-size: 1.1rem !important;
-  font-weight: 600;
-}
-
-.fc-button-primary {
-  background-color: #0284c7 !important;
-  border-color: #0284c7 !important;
-}
-
-.fc-button-primary:hover {
-  background-color: #0369a1 !important;
-  border-color: #0369a1 !important;
-}
-
-.fc-button-active {
-  background-color: #0369a1 !important;
-}
-
 .fc-daygrid-day-number,
 .fc-col-header-cell-cushion {
   color: #374151;
@@ -49,4 +33,71 @@
 .cancelled-event {
   opacity: 0.5;
   text-decoration: line-through;
+}
+
+/* ── List view — iOS-style ───────────────────── */
+.fc-list {
+  border: none !important;
+}
+
+.fc-list-day-cushion {
+  background: #f9fafb !important;
+  padding: 6px 14px !important;
+}
+
+.fc-list-day-text {
+  font-size: 0.8rem !important;
+  font-weight: 700 !important;
+  color: #111827 !important;
+  text-decoration: none !important;
+}
+
+.fc-list-day-side-text {
+  font-size: 0.8rem !important;
+  font-weight: 400 !important;
+  color: #6b7280 !important;
+  text-decoration: none !important;
+}
+
+.fc-list-event {
+  cursor: pointer;
+}
+
+.fc-list-event td {
+  border-color: #f3f4f6 !important;
+  padding: 10px 14px !important;
+}
+
+.fc-list-event-time {
+  color: #6b7280 !important;
+  font-size: 0.8rem !important;
+  white-space: nowrap;
+  min-width: 90px;
+}
+
+.fc-list-event-graphic {
+  padding-right: 10px !important;
+}
+
+.fc-list-event-dot {
+  border-width: 6px !important;
+}
+
+.fc-list-empty-cushion {
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+/* ── Mobile: tighten column header ──────────── */
+@media (max-width: 640px) {
+  .fc-col-header-cell-cushion {
+    font-size: 0.7rem;
+    padding: 4px 2px !important;
+  }
+  .fc-daygrid-day-number {
+    font-size: 0.75rem;
+  }
+  .fc-timegrid-slot-label {
+    font-size: 0.65rem;
+  }
 }

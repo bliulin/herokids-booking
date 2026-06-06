@@ -32,7 +32,7 @@ export const bookingStatusColors = {
 export const bookingTypeColors = {
   standard: "#3b82f6",
   hero:     "#ec4899",
-  vip:      "#8b5cf6",
+  vip:      "#ef4444",
   walk_in:  "#f97316",
   atelier:  "#10b981",
 } as const;
