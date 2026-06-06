@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback, useState, useEffect } from "react";
+import { useRef, useCallback, useState, useEffect, useMemo } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -97,6 +97,10 @@ export function BookingCalendar({
 
   const isListView = currentView === "listMonth";
 
+  // Capture the initial view once — never pass a changing value to FullCalendar's
+  // initialView prop, as that causes it to flicker/reset on every state update.
+  const initialView = useRef(currentView).current;
+
   useEffect(() => {
     if (window.innerWidth < 640 && currentView !== "listMonth") {
       calRef.current?.getApi().changeView("listMonth");
@@ -105,7 +109,7 @@ export function BookingCalendar({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const events = bookings.map((booking) => {
+  const events = useMemo(() => bookings.map((booking) => {
     const color = bookingTypeColors[booking.bookingType];
     const isCancelled = booking.status === "cancelled";
     return {
@@ -120,7 +124,7 @@ export function BookingCalendar({
       editable: !isCancelled && !isListView,
       extendedProps: { booking },
     };
-  });
+  }), [bookings, isListView]);
 
   const changeView = useCallback((view: ViewKey) => {
     calRef.current?.getApi().changeView(view);
@@ -239,7 +243,7 @@ export function BookingCalendar({
         <FullCalendar
           ref={calRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
-          initialView={currentView}
+          initialView={initialView}
           headerToolbar={false}
           events={events}
           editable={!isListView}

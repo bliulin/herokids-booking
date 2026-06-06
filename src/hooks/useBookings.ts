@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { CreateBookingInput } from "@/types/booking";
 
@@ -8,6 +8,7 @@ export function useBookings(from?: string, to?: string) {
   return useQuery({
     queryKey: ["bookings", from, to],
     queryFn: () => api.bookings.list(from, to).then((r) => r.data),
+    placeholderData: keepPreviousData,
   });
 }
 
