@@ -13,6 +13,7 @@ import type {
   EventDropArg,
   DatesSetArg,
 } from "@fullcalendar/core";
+import type { DateClickArg } from "@fullcalendar/interaction";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import type { Booking } from "@/db/schema";
 import { bookingTypeColors, bookingTypeLabels, bookingStatusColors, bookingStatusLabels } from "@/types/booking";
@@ -147,12 +148,26 @@ export function BookingCalendar({
     [onEventClick]
   );
 
+  const autoEnd = useCallback(
+    (start: Date) => new Date(start.getTime() + 2.5 * 60 * 60 * 1000),
+    []
+  );
+
+  // Drag-to-select on desktop — ignore FullCalendar's end, always use start + 2.5 h
   const handleDateSelect = useCallback(
     (info: DateSelectArg) => {
-      onDateSelect(info.start, info.end);
+      onDateSelect(info.start, autoEnd(info.start));
       calRef.current?.getApi().unselect();
     },
-    [onDateSelect]
+    [onDateSelect, autoEnd]
+  );
+
+  // Single tap on an empty slot — fires immediately on touch, no long-press needed
+  const handleDateClick = useCallback(
+    (info: DateClickArg) => {
+      onDateSelect(info.date, autoEnd(info.date));
+    },
+    [onDateSelect, autoEnd]
   );
 
   const handleEventDrop = useCallback(
@@ -250,6 +265,7 @@ export function BookingCalendar({
           eventDurationEditable={false}
           selectable={!isListView}
           selectMirror
+          selectMinDistance={5}
           dayMaxEvents={3}
           weekends
           height={isListView ? "calc(100dvh - 230px)" : "auto"}
@@ -260,6 +276,7 @@ export function BookingCalendar({
           eventClick={handleEventClick}
           eventDrop={handleEventDrop}
           select={handleDateSelect}
+          dateClick={handleDateClick}
           datesSet={handleDatesSet}
           eventContent={(info) => <EventContent info={info} />}
           eventTimeFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }}
