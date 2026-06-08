@@ -279,6 +279,11 @@ export function BookingCalendar({
           dateClick={handleDateClick}
           datesSet={handleDatesSet}
           eventContent={(info) => <EventContent info={info} />}
+          dayHeaderFormat={(arg) => {
+            const d = arg.date.marker;
+            const wd = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()];
+            return `${wd} ${d.getDate()}/${d.getMonth() + 1}`;
+          }}
           eventTimeFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }}
           listDayFormat={{ weekday: "long", day: "numeric", month: "long" }}
           listDaySideFormat={false}
