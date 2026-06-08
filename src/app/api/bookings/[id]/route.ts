@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuthRequest } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 import {
   getBookingById,
   updateBooking,
@@ -11,7 +11,7 @@ import { createBookingSchema } from "@/types/booking";
 type Params = { params: Promise<{ id: string }> };
 
 export async function GET(req: NextRequest, { params }: Params) {
-  const authError = requireAuthRequest(req);
+  const authError = await requireAuth();
   if (authError) return authError;
 
   const { id } = await params;
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest, { params }: Params) {
 }
 
 export async function PUT(req: NextRequest, { params }: Params) {
-  const authError = requireAuthRequest(req);
+  const authError = await requireAuth();
   if (authError) return authError;
 
   const { id } = await params;
@@ -67,7 +67,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(req: NextRequest, { params }: Params) {
-  const authError = requireAuthRequest(req);
+  const authError = await requireAuth();
   if (authError) return authError;
 
   const { id } = await params;

@@ -16,6 +16,7 @@
     "start:prod": "npm run db:migrate && next start"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.4.3",
     "@fullcalendar/core": "^6.1.15",
     "@fullcalendar/daygrid": "^6.1.15",
     "@fullcalendar/interaction": "^6.1.15",
