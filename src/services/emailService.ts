@@ -164,7 +164,7 @@ export async function sendBookingNotificationEmail(booking: Booking, action: Boo
   const { error } = await resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL ?? "noreply@herokids.ro",
     to: config.auth.allowedEmails,
-    subject: `[${env}] HeroKids – ${ACTION_LABELS[action]}: ${booking.customerName} (${date} ${start})`,
+    subject: `${env} HeroKids – ${ACTION_LABELS[action]}: ${booking.customerName} (${date} ${start})`,
     html: buildBookingNotificationHtml(booking, action),
   });
 
