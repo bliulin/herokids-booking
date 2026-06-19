@@ -6,6 +6,14 @@ import { config } from "@/lib/config";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+function getEnvLabel() {
+  return process.env.NODE_ENV === "production" ? "" : "TESTING";
+}
+
+function getAppUrl() {
+  return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+}
+
 const BOOKING_TYPE_LABELS: Record<string, string> = {
   standard: "Standard",
   hero: "Hero",
@@ -105,6 +113,8 @@ function buildBookingNotificationHtml(booking: Booking, action: BookingAction): 
   const date = booking.startTime.substring(0, 10);
   const start = formatTime(booking.startTime);
   const end = formatTime(booking.endTime);
+  const envLabel = getEnvLabel();
+  const appUrl = getAppUrl();
 
   const rows = [
     ["Data", date],
@@ -128,26 +138,33 @@ function buildBookingNotificationHtml(booking: Booking, action: BookingAction): 
   return `
 <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;background:#f8fafc;">
   <div style="background:white;border-radius:12px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.1);">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
-      <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${ACTION_COLORS[action]};"></span>
-      <h1 style="margin:0;font-size:18px;color:#0f172a;">${ACTION_LABELS[action]}</h1>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${ACTION_COLORS[action]};flex-shrink:0;"></span>
+        <h1 style="margin:0;font-size:18px;color:#0f172a;">${ACTION_LABELS[action]}</h1>
+      </div>
+      <span style="font-size:11px;font-weight:600;padding:3px 8px;border-radius:99px;background:${envLabel === "Production" ? "#dcfce7" : "#fef9c3"};color:${envLabel === "Production" ? "#15803d" : "#a16207"};">${envLabel}</span>
     </div>
     <table style="width:100%;border-collapse:collapse;font-size:14px;">
       <tbody>${rows}</tbody>
     </table>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #f1f5f9;text-align:center;">
+      <a href="${appUrl}" style="display:inline-block;padding:9px 20px;background:#0369a1;color:white;text-decoration:none;border-radius:8px;font-size:13px;font-weight:500;">Deschide aplicația</a>
+    </div>
   </div>
-  <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">HeroKids Play Space</p>
+  <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">HeroKids Play Space · <a href="${appUrl}" style="color:#94a3b8;">${appUrl}</a></p>
 </div>`;
 }
 
 export async function sendBookingNotificationEmail(booking: Booking, action: BookingAction) {
   const date = booking.startTime.substring(0, 10);
   const start = formatTime(booking.startTime);
+  const env = getEnvLabel();
 
   const { error } = await resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL ?? "noreply@herokids.ro",
     to: config.auth.allowedEmails,
-    subject: `HeroKids – ${ACTION_LABELS[action]}: ${booking.customerName} (${date} ${start})`,
+    subject: `[${env}] HeroKids – ${ACTION_LABELS[action]}: ${booking.customerName} (${date} ${start})`,
     html: buildBookingNotificationHtml(booking, action),
   });
 
@@ -160,7 +177,7 @@ export async function sendDailySummaryEmail(activeBookings: Booking[], tomorrowD
   const { error } = await resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL ?? "contact@herokids.ro",
     to: config.auth.allowedEmails,
-    subject: `HeroKids – ${format(tomorrowDate, "d MMM", { locale: ro })} – ${activeBookings.length} rezervări`,
+    subject: `[${getEnvLabel()}] HeroKids – ${format(tomorrowDate, "d MMM", { locale: ro })} – ${activeBookings.length} rezervări`,
     html: buildHtml(activeBookings, dateLabel),
   });
 
