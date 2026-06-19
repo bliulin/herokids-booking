@@ -7,6 +7,7 @@ import {
   updateCalendarEvent,
   cancelCalendarEvent,
 } from "./googleCalendarService";
+import { sendBookingNotificationEmail } from "./emailService";
 import type { CreateBookingInput } from "@/types/booking";
 
 export class BookingError extends Error {
@@ -90,7 +91,9 @@ export async function createBooking(input: CreateBookingInput): Promise<Booking>
     throw err;
   }
 
-  return applyCalendarSync(created, () => createCalendarEvent(created));
+  const result = await applyCalendarSync(created, () => createCalendarEvent(created));
+  sendBookingNotificationEmail(result, "created").catch(console.error);
+  return result;
 }
 
 export async function updateBooking(id: number, input: Partial<CreateBookingInput>): Promise<Booking> {
@@ -158,7 +161,10 @@ export async function updateBooking(id: number, input: Partial<CreateBookingInpu
       ? () => cancelCalendarEvent(updated.googleCalendarEventId!)
       : () => updateCalendarEvent(updated);
 
-  return applyCalendarSync(updated, calendarOp);
+  const result = await applyCalendarSync(updated, calendarOp);
+  const action = result.status === "cancelled" ? "cancelled" : "updated";
+  sendBookingNotificationEmail(result, action).catch(console.error);
+  return result;
 }
 
 export async function cancelBooking(id: number): Promise<Booking> {

@@ -4,11 +4,10 @@ export const config = {
     maxChildren: 30,
   },
   auth: {
-    // Simple password protection for internal staff use.
-    // Replace with a proper auth system (NextAuth, Clerk, etc.) before exposing to the internet.
-    password: process.env.ACCESS_PASSWORD ?? "herokids2026",
-    cookieName: "herokids_access",
-    cookieMaxAge: 60 * 60 * 24 * 7, // 7 days
+    allowedEmails: [
+      "irina.dolhescu92@gmail.com",
+      "bliulinx@gmail.com",
+    ] as string[],
   },
   googleCalendar: {
     clientId: process.env.GOOGLE_CLIENT_ID ?? "",

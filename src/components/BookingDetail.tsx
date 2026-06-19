@@ -104,11 +104,11 @@ export function BookingDetail({ booking, onClose }: BookingDetailProps) {
         <Detail label="Children" value={`${booking.numberOfChildren}`} />
         <Detail
           label="Start"
-          value={format(new Date(booking.startTime), "EEE d MMM yyyy, HH:mm")}
+          value={format(new Date(booking.startTime), "dd-MM-yyyy, HH:mm")}
         />
         <Detail
           label="End"
-          value={format(new Date(booking.endTime), "EEE d MMM yyyy, HH:mm")}
+          value={format(new Date(booking.endTime), "dd-MM-yyyy, HH:mm")}
         />
       </div>
 
@@ -124,8 +124,8 @@ export function BookingDetail({ booking, onClose }: BookingDetailProps) {
 
       {/* Meta */}
       <p className="text-xs text-gray-400">
-        Created {format(new Date(booking.createdAt), "d MMM yyyy HH:mm")} ·
-        Updated {format(new Date(booking.updatedAt), "d MMM yyyy HH:mm")}
+        Created {format(new Date(booking.createdAt), "dd-MM-yyyy HH:mm")} ·
+        Updated {format(new Date(booking.updatedAt), "dd-MM-yyyy HH:mm")}
       </p>
 
       {serverError && (
