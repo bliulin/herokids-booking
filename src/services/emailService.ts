@@ -7,7 +7,7 @@ import { config } from "@/lib/config";
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 function getEnvLabel() {
-  return process.env.NODE_ENV === "production" ? "" : "TESTING";
+  return process.env.RAILWAY_ENVIRONMENT_NAME === "production" ? "" : "TESTING";
 }
 
 function getAppUrl() {
