@@ -143,7 +143,7 @@ function buildBookingNotificationHtml(booking: Booking, action: BookingAction): 
         <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${ACTION_COLORS[action]};flex-shrink:0;"></span>
         <h1 style="margin:0;font-size:18px;color:#0f172a;">${ACTION_LABELS[action]}</h1>
       </div>
-      <span style="font-size:11px;font-weight:600;padding:3px 8px;border-radius:99px;background:${envLabel === "Production" ? "#dcfce7" : "#fef9c3"};color:${envLabel === "Production" ? "#15803d" : "#a16207"};">${envLabel}</span>
+      ${envLabel ? `<span style="font-size:11px;font-weight:600;padding:3px 8px;border-radius:99px;background:#fef9c3;color:#a16207;">${envLabel}</span>` : ""}
     </div>
     <table style="width:100%;border-collapse:collapse;font-size:14px;">
       <tbody>${rows}</tbody>
