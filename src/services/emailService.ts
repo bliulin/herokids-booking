@@ -87,6 +87,73 @@ function buildHtml(activeBookings: Booking[], dateLabel: string): string {
 </div>`;
 }
 
+type BookingAction = "created" | "updated" | "cancelled";
+
+const ACTION_LABELS: Record<BookingAction, string> = {
+  created: "Rezervare nouă",
+  updated: "Rezervare modificată",
+  cancelled: "Rezervare anulată",
+};
+
+const ACTION_COLORS: Record<BookingAction, string> = {
+  created: "#16a34a",
+  updated: "#d97706",
+  cancelled: "#dc2626",
+};
+
+function buildBookingNotificationHtml(booking: Booking, action: BookingAction): string {
+  const date = booking.startTime.substring(0, 10);
+  const start = formatTime(booking.startTime);
+  const end = formatTime(booking.endTime);
+
+  const rows = [
+    ["Data", date],
+    ["Orar", `${start} – ${end}`],
+    ["Client", booking.customerName],
+    ["Telefon", booking.phone],
+    ["Copii", String(booking.numberOfChildren)],
+    ["Tip", BOOKING_TYPE_LABELS[booking.bookingType] ?? booking.bookingType],
+    ["Plată", PAYMENT_STATUS_LABELS[booking.paymentStatus] ?? booking.paymentStatus],
+    ...(booking.notes ? [["Note", booking.notes]] : []),
+  ]
+    .map(
+      ([label, value]) => `
+    <tr>
+      <td style="padding:8px 12px;color:#64748b;white-space:nowrap;">${label}</td>
+      <td style="padding:8px 12px;color:#1e293b;font-weight:500;">${value}</td>
+    </tr>`
+    )
+    .join("\n");
+
+  return `
+<div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;background:#f8fafc;">
+  <div style="background:white;border-radius:12px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.1);">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+      <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${ACTION_COLORS[action]};"></span>
+      <h1 style="margin:0;font-size:18px;color:#0f172a;">${ACTION_LABELS[action]}</h1>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;">
+      <tbody>${rows}</tbody>
+    </table>
+  </div>
+  <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">HeroKids Play Space</p>
+</div>`;
+}
+
+export async function sendBookingNotificationEmail(booking: Booking, action: BookingAction) {
+  const date = booking.startTime.substring(0, 10);
+  const start = formatTime(booking.startTime);
+
+  const { error } = await resend.emails.send({
+    from: process.env.RESEND_FROM_EMAIL ?? "noreply@herokids.ro",
+    to: config.auth.allowedEmails,
+    subject: `HeroKids – ${ACTION_LABELS[action]}: ${booking.customerName} (${date} ${start})`,
+    html: buildBookingNotificationHtml(booking, action),
+  });
+
+  if (error) throw new Error(`Resend error: ${error.message}`);
+}
+
 export async function sendDailySummaryEmail(activeBookings: Booking[], tomorrowDate: Date) {
   const dateLabel = format(tomorrowDate, "EEEE, d MMMM yyyy", { locale: ro });
 
