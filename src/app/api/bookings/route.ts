@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuthRequest } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 import { getBookings, createBooking, BookingError } from "@/services/bookingService";
 import { createBookingSchema } from "@/types/booking";
 
 export async function GET(req: NextRequest) {
-  const authError = requireAuthRequest(req);
+  const authError = await requireAuth();
   if (authError) return authError;
 
   const { searchParams } = new URL(req.url);
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const authError = requireAuthRequest(req);
+  const authError = await requireAuth();
   if (authError) return authError;
 
   let body: unknown;

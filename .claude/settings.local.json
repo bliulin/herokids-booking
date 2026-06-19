@@ -28,7 +28,13 @@
       "Bash(echo \"exit: $?\")",
       "PowerShell(docker compose *)",
       "PowerShell(docker context ls *)",
-      "PowerShell(docker --context default compose -f \"C:\\\\rootpathsoftware\\\\herokids-booking\\\\docker-compose.yml\" up -d 2>&1)"
+      "PowerShell(docker --context default compose -f \"C:\\\\rootpathsoftware\\\\herokids-booking\\\\docker-compose.yml\" up -d 2>&1)",
+      "Bash(node *)",
+      "Bash(command -v clerk)",
+      "Bash(clerk --version)",
+      "Bash(clerk auth *)",
+      "Bash(clerk init *)",
+      "Bash(clerk doctor *)"
     ]
   }
 }
