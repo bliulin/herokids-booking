@@ -1,14 +1,27 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { clerkMiddleware, createRouteMatcher, clerkClient } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+import { config as appConfig } from "@/lib/config";
 
 const isPublicRoute = createRouteMatcher([
   "/login(.*)",
   "/sign-in(.*)",
   "/sign-up(.*)",
+  "/unauthorized(.*)",
 ]);
 
 export const proxy = clerkMiddleware(async (auth, req) => {
-  if (!isPublicRoute(req)) {
-    await auth.protect();
+  if (isPublicRoute(req)) return;
+
+  const { userId } = await auth.protect();
+
+  const clerk = await clerkClient();
+  const user = await clerk.users.getUser(userId);
+  const primaryEmail = user.emailAddresses.find(
+    (e) => e.id === user.primaryEmailAddressId
+  )?.emailAddress;
+
+  if (!primaryEmail || !appConfig.auth.allowedEmails.includes(primaryEmail)) {
+    return NextResponse.redirect(new URL("/unauthorized", req.url));
   }
 });
 
