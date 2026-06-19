@@ -177,7 +177,7 @@ export async function sendDailySummaryEmail(activeBookings: Booking[], tomorrowD
   const { error } = await resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL ?? "contact@herokids.ro",
     to: config.auth.allowedEmails,
-    subject: `[${getEnvLabel()}] HeroKids – ${format(tomorrowDate, "d MMM", { locale: ro })} – ${activeBookings.length} rezervări`,
+    subject: `${getEnvLabel()} HeroKids – ${format(tomorrowDate, "d MMM", { locale: ro })} – ${activeBookings.length} rezervări`,
     html: buildHtml(activeBookings, dateLabel),
   });
 
