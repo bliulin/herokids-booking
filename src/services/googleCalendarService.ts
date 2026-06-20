@@ -26,6 +26,11 @@ function buildEventTitle(booking: Booking): string {
   return `${type} - ${booking.customerName} - ${booking.numberOfChildren} kids`;
 }
 
+function toRfc3339(dt: string): string {
+  // Stored as "2026-06-20T11:00" — Google requires seconds
+  return dt.length === 16 ? `${dt}:00` : dt;
+}
+
 function buildEventDescription(booking: Booking): string {
   const lines = [
     `Customer: ${booking.customerName}`,
@@ -52,8 +57,8 @@ export async function createCalendarEvent(booking: Booking): Promise<CalendarSyn
       requestBody: {
         summary: buildEventTitle(booking),
         description: buildEventDescription(booking),
-        start: { dateTime: booking.startTime },
-        end: { dateTime: booking.endTime },
+        start: { dateTime: toRfc3339(booking.startTime), timeZone: "Europe/Bucharest" },
+        end: { dateTime: toRfc3339(booking.endTime), timeZone: "Europe/Bucharest" },
         status: booking.status === "cancelled" ? "cancelled" : "confirmed",
       },
     });
@@ -83,8 +88,8 @@ export async function updateCalendarEvent(booking: Booking): Promise<CalendarSyn
       requestBody: {
         summary: buildEventTitle(booking),
         description: buildEventDescription(booking),
-        start: { dateTime: booking.startTime },
-        end: { dateTime: booking.endTime },
+        start: { dateTime: toRfc3339(booking.startTime), timeZone: "Europe/Bucharest" },
+        end: { dateTime: toRfc3339(booking.endTime), timeZone: "Europe/Bucharest" },
         status: booking.status === "cancelled" ? "cancelled" : "confirmed",
       },
     });
