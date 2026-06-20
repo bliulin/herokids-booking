@@ -157,6 +157,12 @@ function buildBookingNotificationHtml(booking: Booking, action: BookingAction): 
 }
 
 export async function sendBookingNotificationEmail(booking: Booking, action: BookingAction) {
+  
+  if (process.env.DEBUG_NO_EMAILS) {
+    console.log(`DEBUG_NO_EMAILS is set. Skipping sending email for booking ${booking.id} (${action}).`);
+    return;
+  }
+  
   const date = booking.startTime.substring(0, 10);
   const start = formatTime(booking.startTime);
   const env = getEnvLabel();
