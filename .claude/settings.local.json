@@ -37,7 +37,10 @@
       "Bash(clerk doctor *)",
       "Bash(psql *)",
       "PowerShell(docker exec herokids-booking-postgres-1 *)",
-      "PowerShell([System.Text.Encoding]::UTF8.GetString\\([System.Convert]::FromBase64String\\(\"ZGI0MTM0NDU2MTRkZjIzOGVlYjU1YmZhYTlhNTQzZjM5OTI2MTYwMjg5MjNhNzkyOWNhZTYwMjZjZGVmNmU0OEBncm91cC5jYWxlbmRhci5nb29nbGUuY29t\"\\)\\))"
+      "PowerShell([System.Text.Encoding]::UTF8.GetString\\([System.Convert]::FromBase64String\\(\"ZGI0MTM0NDU2MTRkZjIzOGVlYjU1YmZhYTlhNTQzZjM5OTI2MTYwMjg5MjNhNzkyOWNhZTYwMjZjZGVmNmU0OEBncm91cC5jYWxlbmRhci5nb29nbGUuY29t\"\\)\\))",
+      "Bash(npx tsx *)",
+      "Skill(run)",
+      "Bash(taskkill *)"
     ]
   }
 }

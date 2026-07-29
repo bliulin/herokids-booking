@@ -7,6 +7,7 @@ export const config = {
     allowedEmails: [
       "irina.dolhescu92@gmail.com",
       "bliulinx@gmail.com",
+      "flaviacristianaatoderesei@gmail.com",
     ] as string[],
   },
   googleCalendar: {

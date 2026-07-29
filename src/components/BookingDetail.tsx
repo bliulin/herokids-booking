@@ -99,16 +99,16 @@ export function BookingDetail({ booking, onClose }: BookingDetailProps) {
       {/* Details grid */}
       <div className="grid grid-cols-2 gap-3 text-sm">
         <Detail label="Customer" value={booking.customerName} />
-        <Detail label="Phone" value={booking.phone} />
+        {booking.phone && <Detail label="Phone" value={booking.phone} />}
         {booking.email && <Detail label="Email" value={booking.email} />}
         <Detail label="Children" value={`${booking.numberOfChildren}`} />
         <Detail
           label="Start"
-          value={format(new Date(booking.startTime), "dd-MM-yyyy, HH:mm")}
+          value={format(new Date(booking.startTime), "dd/MM/yyyy HH:mm")}
         />
         <Detail
           label="End"
-          value={format(new Date(booking.endTime), "dd-MM-yyyy, HH:mm")}
+          value={format(new Date(booking.endTime), "dd/MM/yyyy HH:mm")}
         />
       </div>
 
@@ -124,8 +124,8 @@ export function BookingDetail({ booking, onClose }: BookingDetailProps) {
 
       {/* Meta */}
       <p className="text-xs text-gray-400">
-        Created {format(new Date(booking.createdAt), "dd-MM-yyyy HH:mm")} ·
-        Updated {format(new Date(booking.updatedAt), "dd-MM-yyyy HH:mm")}
+        Created {format(new Date(booking.createdAt), "dd/MM/yyyy HH:mm")} ·
+        Updated {format(new Date(booking.updatedAt), "dd/MM/yyyy HH:mm")}
       </p>
 
       {serverError && (

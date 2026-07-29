@@ -1,10 +1,10 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createBookingSchema, type CreateBookingInput } from "@/types/booking";
 import type { Booking } from "@/db/schema";
-import { format } from "date-fns";
+import { DateTimePicker } from "./DateTimePicker";
 
 interface BookingFormProps {
   defaultValues?: Partial<CreateBookingInput>;
@@ -12,15 +12,6 @@ interface BookingFormProps {
   isSubmitting?: boolean;
   submitLabel?: string;
   serverError?: string;
-}
-
-function toDateTimeLocal(iso?: string | null): string {
-  if (!iso) return "";
-  try {
-    return format(new Date(iso), "yyyy-MM-dd'T'HH:mm");
-  } catch {
-    return "";
-  }
 }
 
 export function BookingForm({
@@ -33,6 +24,8 @@ export function BookingForm({
   const {
     register,
     handleSubmit,
+    control,
+    setValue,
     formState: { errors },
   } = useForm<CreateBookingInput>({
     resolver: zodResolver(createBookingSchema),
@@ -42,11 +35,15 @@ export function BookingForm({
       bookingType: "standard",
       numberOfChildren: 1,
       ...defaultValues,
-      // datetime-local inputs require "yyyy-MM-dd'T'HH:mm" — convert from ISO if present
-      startTime: toDateTimeLocal(defaultValues?.startTime) || defaultValues?.startTime || "",
-      endTime: toDateTimeLocal(defaultValues?.endTime) || defaultValues?.endTime || "",
     },
   });
+
+  function handleStartTimeChange(iso: string) {
+    setValue("startTime", iso, { shouldValidate: true });
+    setValue("endTime", new Date(new Date(iso).getTime() + 2.5 * 60 * 60 * 1000).toISOString(), {
+      shouldValidate: true,
+    });
+  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
@@ -55,7 +52,7 @@ export function BookingForm({
         <Field label="Customer Name *" error={errors.customerName?.message}>
           <input {...register("customerName")} className={input(errors.customerName)} placeholder="Full name" />
         </Field>
-        <Field label="Phone *" error={errors.phone?.message}>
+        <Field label="Phone" error={errors.phone?.message}>
           <input {...register("phone")} className={input(errors.phone)} placeholder="+44 7700 000000" />
         </Field>
       </div>
@@ -88,17 +85,29 @@ export function BookingForm({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Start Time *" error={errors.startTime?.message}>
-          <input
-            {...register("startTime")}
-            type="datetime-local"
-            className={input(errors.startTime)}
+          <Controller
+            control={control}
+            name="startTime"
+            render={({ field }) => (
+              <DateTimePicker
+                value={field.value}
+                onChange={handleStartTimeChange}
+                error={!!errors.startTime}
+              />
+            )}
           />
         </Field>
         <Field label="End Time *" error={errors.endTime?.message}>
-          <input
-            {...register("endTime")}
-            type="datetime-local"
-            className={input(errors.endTime)}
+          <Controller
+            control={control}
+            name="endTime"
+            render={({ field }) => (
+              <DateTimePicker
+                value={field.value}
+                onChange={field.onChange}
+                error={!!errors.endTime}
+              />
+            )}
           />
         </Field>
       </div>
