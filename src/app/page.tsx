@@ -57,7 +57,13 @@ export default function HomePage() {
             <p className="text-sm text-gray-500">Click a slot to create · Click an event to view</p>
           </div>
           <button
-            onClick={() => setCreateDefaults({})}
+            onClick={() => {
+              const now = new Date();
+              setCreateDefaults({
+                startTime: now.toISOString(),
+                endTime: new Date(now.getTime() + 2.5 * 60 * 60 * 1000).toISOString(),
+              });
+            }}
             className="flex items-center gap-1.5 bg-sky-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-sky-700 transition-colors shadow-sm"
           >
             <Plus size={16} /> New Booking
