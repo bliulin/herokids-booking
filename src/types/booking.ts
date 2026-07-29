@@ -39,7 +39,7 @@ export const bookingTypeColors = {
 
 export const createBookingSchema = z.object({
   customerName: z.string().min(1, "Customer name is required").max(200),
-  phone: z.string().min(1, "Phone number is required").max(50),
+  phone: z.string().max(50).optional().or(z.literal("")),
   email: z.string().email("Invalid email address").max(200).optional().or(z.literal("")),
   numberOfChildren: z
     .number({ invalid_type_error: "Must be a number" })

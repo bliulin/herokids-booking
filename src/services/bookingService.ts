@@ -63,7 +63,7 @@ export async function createBooking(input: CreateBookingInput): Promise<Booking>
           .insert(bookings)
           .values({
             customerName: input.customerName,
-            phone: input.phone,
+            phone: input.phone || "",
             email: input.email || null,
             numberOfChildren: input.numberOfChildren,
             bookingType: input.bookingType,
