@@ -34,8 +34,22 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: "#dc2626",
 };
 
-function formatTime(iso: string) {
-  return iso.substring(11, 16); // "HH:mm" from ISO string, no timezone conversion
+function formatTime(iso: string): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Bucharest",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(new Date(iso));
+}
+
+function formatDate(iso: string): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Bucharest",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(iso));
 }
 
 function buildHtml(activeBookings: Booking[], dateLabel: string): string {
@@ -110,7 +124,7 @@ const ACTION_COLORS: Record<BookingAction, string> = {
 };
 
 function buildBookingNotificationHtml(booking: Booking, action: BookingAction): string {
-  const date = booking.startTime.substring(0, 10);
+  const date = formatDate(booking.startTime);
   const start = formatTime(booking.startTime);
   const end = formatTime(booking.endTime);
   const envLabel = getEnvLabel();
@@ -163,7 +177,7 @@ export async function sendBookingNotificationEmail(booking: Booking, action: Boo
     return;
   }
   
-  const date = booking.startTime.substring(0, 10);
+  const date = formatDate(booking.startTime);
   const start = formatTime(booking.startTime);
   const env = getEnvLabel();
 
